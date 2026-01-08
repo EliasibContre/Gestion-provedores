@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express-async-handler": "^1.2.0"
+  }
+}

@@ -1,0 +1,20 @@
+# Node modules
+Front-Gestion-de-Proveedores/node_modules/
+GP-Backend/node_modules/
+
+# Build outputs
+Front-Gestion-de-Proveedores/dist/
+GP-Backend/dist/
+
+# Env files
+Front-Gestion-de-Proveedores/.env
+GP-Backend/.env
+GP-Backend/.env.example
+.env
+.env.example
+
+# Prisma
+GP-Backend/prisma/migrations/
+
+# Logs
+*.log
