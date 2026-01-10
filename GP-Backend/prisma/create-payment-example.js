@@ -4,7 +4,7 @@
  * Uso:
  * node prisma/create-payment-example.js
  */
-
+  
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
