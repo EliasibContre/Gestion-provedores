@@ -1,57 +1,83 @@
 // prisma/seed.js
-
-
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+
 const prisma = new PrismaClient();
 
-await prisma.provider.upsert({
-  where: { rfc: 'ABC123456T12' },
-  update: {},
-  create: { rfc: 'ABC123456T12', businessName: 'Proveedor Demo SA de CV', isApproved: true },
-});
-await prisma.$disconnect();
-
 async function main() {
-  // Roles
+  // 1. Crear Roles
   const [ADMIN, APPROVER, PROVIDER] = await Promise.all([
     prisma.role.upsert({ where: { name: 'ADMIN' }, update: {}, create: { name: 'ADMIN' } }),
     prisma.role.upsert({ where: { name: 'APPROVER' }, update: {}, create: { name: 'APPROVER' } }),
     prisma.role.upsert({ where: { name: 'PROVIDER' }, update: {}, create: { name: 'PROVIDER' } }),
   ]);
 
-  // Admin inicial
+  // 2. Crear Admin inicial
+  // Credenciales: jtelpalo@mbqinc.com / Aa12345!
   const passwordHash = await bcrypt.hash('Aa12345!', 10);
+  
   await prisma.user.upsert({
-    where: { email: 'jtelpalo@mbqinc.com' },
-    update: {},
+    where: { email: 'eliasibcontreras018@gmail.com' },
+    update: {
+      passwordHash, // Actualizamos el hash por si cambiaste la semilla
+      mustChangePassword: true
+    },
     create: {
-      email: 'jtelpalo@mbqinc.com',
-      fullName: 'Approver MBQ',
+      email: 'eliasibcontreras018@gmail.com',
+      fullName: 'Admin Demo',
       passwordHash,
       mustChangePassword: true,
-      roles: { create: [{ roleId: APPROVER.id }] }
+      roles: { 
+        create: [{ roleId: ADMIN.id }] // Asignamos rol de ADMIN para que puedas ver todo
+      }
     }
   });
 
-  // Tipos de documento básicos
+  // 3. Tipos de documento (CORREGIDO: Agregados los 'code')
   const docTypes = [
-    { name: 'Constancia de Situación Fiscal', isRequired: true },
-    { name: 'Comprobante Bancario', isRequired: true },
-    { name: 'Identificación Oficial', isRequired: false },
-    { name: 'Opinión de Cumplimiento', isRequired: false },
+    { code: 'CONSTANCIA_FISCAL', name: 'Constancia de Situación Fiscal', isRequired: true },
+    { code: 'EDO_CUENTA', name: 'Comprobante Bancario', isRequired: true },
+    { code: 'ID_OFICIAL', name: 'Identificación Oficial', isRequired: false },
+    { code: 'OPINION_CUMPLIMIENTO', name: 'Opinión de Cumplimiento', isRequired: false },
+    { code: 'ACTA_CONSTITUTIVA', name: 'Acta Constitutiva', isRequired: false },
+    { code: 'PODER_LEGAL', name: 'Poder Legal', isRequired: false }
   ];
+
   for (const dt of docTypes) {
     await prisma.documentType.upsert({
-      where: { name: dt.name },
-      update: { isRequired: dt.isRequired },
-      create: dt
+      where: { code: dt.code }, // Usamos 'code' como identificador único
+      update: { 
+        name: dt.name,
+        isRequired: dt.isRequired 
+      },
+      create: {
+        code: dt.code,
+        name: dt.name,
+        isRequired: dt.isRequired
+      }
     });
   }
+  
+  // 4. Proveedor Demo (Opcional, movido dentro de main para orden)
+  await prisma.provider.upsert({
+    where: { rfc: 'ABC123456T12' },
+    update: {},
+    create: { 
+      rfc: 'ABC123456T12', 
+      businessName: 'Proveedor Demo SA de CV', 
+      isApproved: true,
+      isActive: true
+    },
+  });
 
-  console.log('Seed OK: roles, admin, document types');
+  console.log('✅ Seed ejecutado correctamente: Roles, Admin y Documentos creados.');
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(async () => { await prisma.$disconnect(); });
+  .catch((e) => {
+    console.error('❌ Error en seed:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
