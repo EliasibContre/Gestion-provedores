@@ -28,7 +28,6 @@ const app = express();
 verifyMailer();
 
 const allowedOrigins = [
-  'http://localhost:5173',
   (process.env.FRONT_PUBLIC_URL || '').trim()
 ].filter(Boolean);
 
