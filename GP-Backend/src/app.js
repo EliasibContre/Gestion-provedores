@@ -28,7 +28,8 @@ const app = express();
 verifyMailer();
 
 const allowedOrigins = [
-  (process.env.FRONT_PUBLIC_URL).trim()
+  'http://localhost:5173', // Para que te funcione en local siempre
+  ...(process.env.FRONT_PUBLIC_URL || '').split(',').map(url => url.trim())
 ].filter(Boolean);
 
 console.log('🔒 CORS allowed origins:', allowedOrigins); // <- AÑADE ESTO
