@@ -28,7 +28,7 @@ const app = express();
 verifyMailer();
 
 const allowedOrigins = [
-  (process.env.FRONT_PUBLIC_URL || '').trim()
+  (process.env.FRONT_PUBLIC_URL).trim()
 ].filter(Boolean);
 
 console.log('🔒 CORS allowed origins:', allowedOrigins); // <- AÑADE ESTO
