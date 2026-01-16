@@ -29,6 +29,7 @@ import DocumentosPro from "./DocumentosPro";
 import EstatusPago from "./EstatusPago";
 import InactivityWarning from '../components/InactivityWarning';
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
+import logoImg from '../assets/logo-relleno.png';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -623,7 +624,7 @@ function DashboardProvider() {
         <div className="flex items-center justify-between px-4 py-4">
           {sidebarOpen && (
             <div className="flex items-center gap-3">
-              <img src="/src/assets/logo-relleno.png" alt="Logo" className="h-8 object-contain" />
+              <img src={logoImg} alt="Logo" className="h-8 object-contain" />
               <span className="font-semibold text-darkBlue">Portal Proveedores</span>
             </div>
           )}

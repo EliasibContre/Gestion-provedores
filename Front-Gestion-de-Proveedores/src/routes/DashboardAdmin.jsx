@@ -31,6 +31,7 @@ import Graficas from './Graficas';
 import GestionPagos from './GestionPagos';
 import InactivityWarning from '../components/InactivityWarning';
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
+import logoImg from '../assets/logo-relleno.png';
 
 function DashboardAdmin() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -291,7 +292,7 @@ function DashboardAdmin() {
           {sidebarOpen && (
             <div className="flex items-center gap-3">
               <img
-                src="/src/assets/logo-relleno.png"
+                src={logoImg}
                 alt="Logo"
                 className="h-8 object-contain"
               />

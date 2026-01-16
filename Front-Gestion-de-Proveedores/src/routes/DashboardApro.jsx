@@ -30,6 +30,7 @@ import Reportes from "./Reportes";
 import SolicitudesAcceso from './SolicitudesAcceso';
 import InactivityWarning from '../components/InactivityWarning';
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
+import logoImg from '../assets/logo-relleno.png';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -585,7 +586,7 @@ function DashboardApro() {
           {sidebarOpen && (
             <div className="flex items-center gap-3">
               <img
-                src="/src/assets/logo-relleno.png"
+                src={logoImg}
                 alt="Logo"
                 className="h-8 object-contain"
               />
