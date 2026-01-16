@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import logoImg from '../assets/logo-relleno.png';
 
 function Login() {
   const navigate = useNavigate();
@@ -265,7 +266,7 @@ function Login() {
         {/* Logo arriba del todo */}
         <div className="text-center mb-8">
           <img 
-            src="/src/assets/logo-relleno.png" 
+            src={logoImg}  // Usamos la variable importada, NO el string
             alt="Logo" 
             className="w-24 h-24 object-contain mx-auto mb-4"
             onError={(e) => {
