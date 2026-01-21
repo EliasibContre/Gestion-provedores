@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx'; // Importar la librería para Excel
+import { Download } from 'lucide-react'; // Icono para el botón
 
 function Reportes({ tipoReporte }) {
   const [datosReportes, setDatosReportes] = useState([]);
@@ -109,6 +111,79 @@ function Reportes({ tipoReporte }) {
     return ((aprobadas / total) * 100).toFixed(1);
   };
 
+  const formatearMoneda = (monto) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN'
+    }).format(monto);
+  };
+
+  // Función para exportar a Excel
+  const exportarAExcel = () => {
+    // Crear datos formateados para Excel
+    const datosExcel = datosReportes.map(proveedor => {
+      const porcentaje = calcularPorcentajeSatisfaccion(
+        proveedor.aprobadas, 
+        proveedor.rechazadas
+      );
+      
+      return {
+        'Proveedor': proveedor.proveedor,
+        'Aprobadas': proveedor.aprobadas,
+        'Rechazadas': proveedor.rechazadas,
+        'Monto Aprobado': formatearMoneda(proveedor.montoAprobado),
+        'Monto Rechazado': formatearMoneda(proveedor.montoRechazado),
+        'Porcentaje de Satisfacción': `${porcentaje}%`
+      };
+    });
+
+    // Agregar fila de resumen
+    const totalAprobadas = datosReportes.reduce((sum, p) => sum + p.aprobadas, 0);
+    const totalRechazadas = datosReportes.reduce((sum, p) => sum + p.rechazadas, 0);
+    const totalMontoAprobado = datosReportes.reduce((sum, p) => sum + p.montoAprobado, 0);
+    const totalMontoRechazado = datosReportes.reduce((sum, p) => sum + p.montoRechazado, 0);
+    const promedioPorcentaje = (
+      datosReportes.reduce((sum, p) => 
+        sum + parseFloat(calcularPorcentajeSatisfaccion(p.aprobadas, p.rechazadas)), 0
+      ) / datosReportes.length
+    ).toFixed(1);
+
+    datosExcel.push({}); // Fila vacía para separación
+    datosExcel.push({
+      'Proveedor': 'TOTALES',
+      'Aprobadas': totalAprobadas,
+      'Rechazadas': totalRechazadas,
+      'Monto Aprobado': formatearMoneda(totalMontoAprobado),
+      'Monto Rechazado': formatearMoneda(totalMontoRechazado),
+      'Porcentaje de Satisfacción': `${promedioPorcentaje}%`
+    });
+
+    // Crear hoja de trabajo
+    const ws = XLSX.utils.json_to_sheet(datosExcel, { skipHeader: false });
+    
+    // Ajustar anchos de columnas
+    const wscols = [
+      { wch: 30 }, // Proveedor
+      { wch: 15 }, // Aprobadas
+      { wch: 15 }, // Rechazadas
+      { wch: 20 }, // Monto Aprobado
+      { wch: 20 }, // Monto Rechazado
+      { wch: 25 }  // Porcentaje de Satisfacción
+    ];
+    ws['!cols'] = wscols;
+
+    // Crear libro de trabajo
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Reporte');
+
+    // Generar nombre del archivo
+    const fecha = new Date().toISOString().split('T')[0];
+    const nombreArchivo = `${tipoReporte === 'ordenes-compra' ? 'Reporte_Ordenes_Compra' : 'Reporte_Facturas'}_${fecha}.xlsx`;
+
+    // Descargar archivo
+    XLSX.writeFile(wb, nombreArchivo);
+  };
+
   if (cargando) {
     return (
       <div className="min-h-screen bg-beige flex items-center justify-center">
@@ -121,13 +196,13 @@ function Reportes({ tipoReporte }) {
   }
 
   return (
-    <div className="min-h-screen bg-beige p-4 md:p-6">
+    <div className="min-h-screen bg-beige p-4">
       {/* Header */}
       <div className="text-center mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-darkBlue mb-2">
+        <h1 className="text-3xl font-bold text-darkBlue mb-2">
           {tipoReporte === 'ordenes-compra' ? 'Reporte de Órdenes de Compra' : 'Reporte de Facturas'}
         </h1>
-        <p className="text-midBlue text-sm md:text-base">
+        <p className="text-midBlue">
           {tipoReporte === 'ordenes-compra' 
             ? 'Seguimiento de órdenes de compra aprobadas y rechazadas' 
             : 'Seguimiento de facturas aprobadas y rechazadas'
@@ -135,14 +210,24 @@ function Reportes({ tipoReporte }) {
         </p>
       </div>
 
+      {/* Botón de descarga Excel */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={exportarAExcel}
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          Descargar Excel
+        </button>
+      </div>
+
       {/* Tabla Simplificada */}
-      <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
-        <h2 className="text-lg md:text-xl font-semibold text-darkBlue mb-4">
+      <div className="bg-white rounded-xl shadow-lg p-4">
+        <h2 className="text-xl font-semibold text-darkBlue mb-4">
           {tipoReporte === 'ordenes-compra' ? 'Desempeño por Proveedor - Órdenes de Compra' : 'Desempeño por Proveedor - Facturas'}
         </h2>
         
-        {/* Vista de escritorio - Tabla */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-lightBlue text-darkBlue">
@@ -153,6 +238,8 @@ function Reportes({ tipoReporte }) {
                 <th className="p-3 font-semibold text-sm text-center">
                   {tipoReporte === 'ordenes-compra' ? 'Órdenes Rechazadas' : 'Facturas Rechazadas'}
                 </th>
+                <th className="p-3 font-semibold text-sm text-center">Monto Aprobado</th>
+                <th className="p-3 font-semibold text-sm text-center">Monto Rechazado</th>
                 <th className="p-3 font-semibold text-sm text-center">Porcentaje de Satisfacción</th>
               </tr>
             </thead>
@@ -174,7 +261,7 @@ function Reportes({ tipoReporte }) {
                     <td className="p-3 text-center">
                       <span className="text-green-600 font-semibold">
                         {proveedor.aprobadas}
-                      </span>
+                    </span>
                     </td>
                     
                     {/* Rechazadas */}
@@ -184,9 +271,23 @@ function Reportes({ tipoReporte }) {
                       </span>
                     </td>
                     
+                    {/* Monto Aprobado */}
+                    <td className="p-3 text-center">
+                      <span className="text-green-600 font-semibold">
+                        {formatearMoneda(proveedor.montoAprobado)}
+                      </span>
+                    </td>
+                    
+                    {/* Monto Rechazado */}
+                    <td className="p-3 text-center">
+                      <span className="text-red-600 font-semibold">
+                        {formatearMoneda(proveedor.montoRechazado)}
+                      </span>
+                    </td>
+                    
                     {/* Porcentaje de Satisfacción */}
                     <td className="p-3 text-center">
-                      <span className={`px-3 py-2 rounded-full text-sm font-semibold ${
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
                         porcentaje >= 80 
                           ? 'bg-green-100 text-green-800'
                           : porcentaje >= 60
@@ -203,83 +304,33 @@ function Reportes({ tipoReporte }) {
           </table>
         </div>
 
-        {/* Vista móvil - Cards */}
-        <div className="md:hidden space-y-4">
-          {datosReportes.map((proveedor, index) => {
-            const porcentaje = calcularPorcentajeSatisfaccion(
-              proveedor.aprobadas, 
-              proveedor.rechazadas
-            );
-            
-            return (
-              <div key={proveedor.proveedor} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                {/* Header de la card */}
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-semibold text-darkBlue text-sm flex-1 pr-2">
-                    {proveedor.proveedor}
-                  </h3>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    porcentaje >= 80 
-                      ? 'bg-green-100 text-green-800'
-                      : porcentaje >= 60
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {porcentaje}%
-                  </span>
-                </div>
-                
-                {/* Estadísticas */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="text-center">
-                    <p className="text-gray-600 text-xs mb-1">
-                      {tipoReporte === 'ordenes-compra' ? 'Aprobadas' : 'Facturas Aprobadas'}
-                    </p>
-                    <p className="text-green-600 font-semibold text-lg">
-                      {proveedor.aprobadas}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-gray-600 text-xs mb-1">
-                      {tipoReporte === 'ordenes-compra' ? 'Rechazadas' : 'Facturas Rechazadas'}
-                    </p>
-                    <p className="text-red-600 font-semibold text-lg">
-                      {proveedor.rechazadas}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
         {/* Resumen Final - Compacto */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="bg-darkBlue text-white rounded-lg p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          <div className="bg-darkBlue text-white rounded-lg p-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
               <div>
-                <p className="text-xs text-lightBlue mb-1">Total Proveedores</p>
-                <p className="text-xl font-bold">{datosReportes.length}</p>
+                <p className="text-xs text-lightBlue">Proveedores</p>
+                <p className="text-lg font-bold">{datosReportes.length}</p>
               </div>
               <div>
-                <p className="text-xs text-lightBlue mb-1">
-                  {tipoReporte === 'ordenes-compra' ? 'Total Aprobadas' : 'Total Facturas Aprobadas'}
+                <p className="text-xs text-lightBlue">
+                  {tipoReporte === 'ordenes-compra' ? 'Órdenes Aprobadas' : 'Facturas Aprobadas'}
                 </p>
-                <p className="text-xl font-bold text-green-300">
+                <p className="text-lg font-bold">
                   {datosReportes.reduce((sum, p) => sum + p.aprobadas, 0)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-lightBlue mb-1">
-                  {tipoReporte === 'ordenes-compra' ? 'Total Rechazadas' : 'Total Facturas Rechazadas'}
+                <p className="text-xs text-lightBlue">
+                  {tipoReporte === 'ordenes-compra' ? 'Órdenes Rechazadas' : 'Facturas Rechazadas'}
                 </p>
-                <p className="text-xl font-bold text-red-300">
+                <p className="text-lg font-bold">
                   {datosReportes.reduce((sum, p) => sum + p.rechazadas, 0)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-lightBlue mb-1">Satisfacción Promedio</p>
-                <p className="text-xl font-bold">
+                <p className="text-xs text-lightBlue">Porcentaje</p>
+                <p className="text-lg font-bold">
                   {(
                     datosReportes.reduce((sum, p) => 
                       sum + parseFloat(calcularPorcentajeSatisfaccion(p.aprobadas, p.rechazadas)), 0
@@ -299,6 +350,9 @@ function Reportes({ tipoReporte }) {
             ? `Total de órdenes procesadas: ${datosReportes.reduce((sum, p) => sum + p.aprobadas + p.rechazadas, 0)}`
             : `Total de facturas procesadas: ${datosReportes.reduce((sum, p) => sum + p.aprobadas + p.rechazadas, 0)}`
           }
+        </p>
+        <p className="mt-1 text-xs text-gray-500">
+          Puedes descargar este reporte en formato Excel haciendo clic en el botón "Descargar Excel"
         </p>
       </div>
     </div>
