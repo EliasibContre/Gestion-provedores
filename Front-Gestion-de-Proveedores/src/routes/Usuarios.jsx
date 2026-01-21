@@ -449,8 +449,8 @@ function Usuarios() {
 
     // Validar email en tiempo real
     if (name === 'email') {
-      if (value && !value.endsWith('@mbqinc.com')) {
-        setErrorEmail("El correo debe tener la extensión @mbqinc.com");
+      if (value && !value.endsWith('@mbqinc.com' || value.endsWith('@gmail.com'))) {
+        setErrorEmail("El correo debe tener la extensión @mbqinc.com o @gmail.com");
       } else {
         setErrorEmail("");
       }
@@ -465,8 +465,8 @@ function Usuarios() {
  const handleAgregarUsuario = async (e) => {
     e.preventDefault();
 
-    if (!nuevoUsuario.email.endsWith('@mbqinc.com')) {
-      setErrorEmail("El correo debe tener la extensión @mbqinc.com");
+    if (!nuevoUsuario.email.endsWith('@mbqinc.com') && !nuevoUsuario.email.endsWith('@gmail.com')) {
+      setErrorEmail("El correo debe tener la extensión @mbqinc.com o @gmail.com");
       return;
     }
 
@@ -851,7 +851,7 @@ function Usuarios() {
                     <p className="text-red-500 text-xs mt-1">{errorEmail}</p>
                   )}
                   <p className="text-midBlue text-xs mt-1">
-                    Solo se permiten correos con la extensión @mbqinc.com
+                    Solo se permiten correos con la extensión @mbqinc.com o @gmail.com
                   </p>
                 </div>
 
